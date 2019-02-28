@@ -3,7 +3,7 @@ A navigator for motion layouts.
 
 ### Quick example
 
-Add this to ur root layout (e.g. activity_main)
+Add this to your root layout (e.g. activity_main)
 ```xml
 <com.hat.motionnavigator.motion.MotionNavHost
     android:id="@+id/navHost"
@@ -51,6 +51,9 @@ Each motion_layout tag has MotionScene's referred to by the following attributes
 - defaultPopExitScene
 
 defaultEnterScene is required. All other attribubtes are inferred if not set.
+- defaultExitScene will use defaultEnterScene reversed
+- defaultPopEnterScene will use defaultEnterScene
+- defaultPopExitScene will use defaultPopEnterScene reversed if found, or defaultExitScene (which may be the reverse of defaultEnterScene)
 
 ### WIP
 This is a work in progress... 
