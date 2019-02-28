@@ -8,12 +8,10 @@
 
     <motion_layout
         android:id="@+id/first_page"
-        app:defaultEnterScene="@xml/first_page_enter"
-        tools:layout="@layout/home"/>
+        app:defaultEnterScene="@xml/first_page_enter" />
 
 
     <motion_layout
         android:id="@+id/second_page"
-        app:defaultEnterScene="@xml/second_page_enter"
-        tools:layout="@layout/home" />
+        app:defaultEnterScene="@xml/second_page_enter" />
 </navigation>

@@ -4,8 +4,6 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.util.AttributeSet
-import android.util.Log
-import android.view.View
 import android.view.ViewGroup
 import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.constraintlayout.motion.widget.TransitionAdapter
@@ -23,7 +21,7 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
         destination: Destination,
         args: Bundle?,
         navOptions: NavOptions?,
-        navigatorExtras: Extras?
+        navigatorExtras: Navigator.Extras?
     ): NavDestination? {
         val previous = stack.peek()
         stack.push(destination)
@@ -57,7 +55,7 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
 
         lateinit var view: MotionLayout
 
-        private lateinit var sceneResIds: SceneResIds
+        private lateinit var sceneInfo: SceneInfo
 
         override fun onInflate(context: Context, attrs: AttributeSet) {
             super.onInflate(context, attrs)
@@ -67,45 +65,23 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
                     NOT_FOUND
                 ).require("defaultEnterScene")
 
-                //If not found use defaultEnterScene reversed
-                val exitResId: IdAndReverse = getResourceId(
+                val exitResId: Int? = getResourceId(
                     R.styleable.MotionNavigator_defaultExitScene,
                     NOT_FOUND
-                ).let{ id ->
-                    if (id == NOT_FOUND) enterResId.reversed()
-                    else id.notReversed()
-                }
+                ).nullIfNotFound()
 
-                //If not found use defaultEnterScene
-                val popEnterResId = getResourceId(
+                val popEnterResId: Int? = getResourceId(
                     R.styleable.MotionNavigator_defaultPopEnterScene,
                     NOT_FOUND
-                ).let { id ->
-                    if (id == NOT_FOUND) enterResId else id
-                }
+                ).nullIfNotFound()
 
-                /**
-                 * When defaultPopExitScene is not found
-                 *  - Use defaultPopEnterScene reversed
-                 *  - Or use defaultExitScene
-                 *  - Or use defaultEnterScene reversed
-                 */
-                val popExitResId: IdAndReverse = getResourceId(
+                val popExitResId: Int? = getResourceId(
                     R.styleable.MotionNavigator_defaultPopExitScene,
                     NOT_FOUND
-                ).let { id ->
-                    if (id == NOT_FOUND) {
-                        if (popEnterResId == NOT_FOUND) exitResId
-                        else popEnterResId.reversed()
-                    } else id.notReversed()
-                }
+                ).nullIfNotFound()
 
-                sceneResIds = SceneResIds(
-                    enterResId,
-                    exitResId,
-                    popEnterResId,
-                    popExitResId
-                )
+                val sceneResIds = SceneResIds(enterResId, exitResId, popEnterResId, popExitResId)
+                sceneInfo = SceneInfo.inferFromResourceIds(sceneResIds)
 
                 recycle()
             }
@@ -114,25 +90,26 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
         }
 
         private fun Int.require(attrName: String): Int = if (this == NOT_FOUND) throw IllegalStateException("MotionNavigator.Destination requires a motion scene for attribute $attrName") else this
+        private fun Int.nullIfNotFound(): Int? = if (this == NOT_FOUND) null else this
 
         fun enter(){
             container.addView(view)
-            transition(sceneResIds.enter)
+            transition(sceneInfo.enter)
         }
 
         fun exit(){
             removeOnComplete()
-            transition(sceneResIds.exit.id, sceneResIds.exit.reverse)
+            transition(sceneInfo.exit.id, sceneInfo.exit.reverse)
         }
 
         fun popEnter(container: ViewGroup) {
             container.addView(view)
-            transition(sceneResIds.popEnter)
+            transition(sceneInfo.popEnter)
         }
 
         fun popExit() {
             removeOnComplete()
-            transition(sceneResIds.popExit.id, sceneResIds.popExit.reverse)
+            transition(sceneInfo.popExit.id, sceneInfo.popExit.reverse)
         }
 
         private fun removeOnComplete(){
@@ -161,9 +138,36 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
             }
         }
 
-        private data class SceneResIds(val enter: Int, val exit: IdAndReverse, val popEnter: Int, val popExit: IdAndReverse)
-        private data class IdAndReverse(val id: Int, val reverse: Boolean)
-        private fun Int.reversed() = IdAndReverse(this, true)
-        private fun Int.notReversed() = IdAndReverse(this, false)
+    }
+
+    private data class IdAndReverse(val id: Int, val reverse: Boolean)
+    private data class SceneInfo(val enter: Int, val exit: IdAndReverse, val popEnter: Int, val popExit: IdAndReverse){
+        companion object {
+            fun inferFromResourceIds(sceneResIds: SceneResIds): SceneInfo = with (sceneResIds) {
+                //If not found use defaultEnterScene reversed
+                val exit = exitResId?.notReversed() ?: enterResId.reversed()
+
+                //If not found use defaultEnterScene
+                val popEnter = popEnterResId ?: enterResId
+
+                /**
+                 * When defaultPopExitScene is not found
+                 *  - Use defaultPopEnterScene reversed
+                 *  - Or use defaultExitScene
+                 *  - Or use defaultEnterScene reversed
+                 */
+                val popExit = popExitResId?.notReversed() ?: popEnterResId?.reversed() ?: exit
+
+                return SceneInfo(enterResId, exit, popEnter, popExit)
+            }
+
+            private fun Int.reversed() = IdAndReverse(this, true)
+            private fun Int.notReversed() = IdAndReverse(this, false)
+        }
+    }
+
+    data class SceneResIds(val enterResId: Int, val exitResId: Int? = null, val popEnterResId: Int? = null, val popExitResId: Int? = null)
+    data class Extras(val sceneResIds: SceneResIds): Navigator.Extras{
+        constructor(enterResId: Int, exitResId: Int? = null, popEnterResId: Int? = null, popExitResId: Int? = null): this(SceneResIds(enterResId, exitResId, popEnterResId, popExitResId))
     }
 }
