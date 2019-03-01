@@ -25,6 +25,8 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
         navOptions: NavOptions?,
         navigatorExtras: Navigator.Extras?
     ): NavDestination? {
+        if (destination.isActive()) return null
+
         val previous = stack.peek()
         stack.push(destination)
 
@@ -45,10 +47,13 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
         Destination(this, container, viewFactory)
 
     override fun popBackStack(): Boolean {
+        val enterDestination: Destination? = stack.elementAtOrNull(1)
+        if (enterDestination != null && enterDestination.isActive()) return false
+
         val poppedDestination: Destination? = stack.pollFirst()
 
         if (poppedDestination != null) {
-            val enterDestination: Destination? = stack.peekFirst()
+            //val enterDestination: Destination? = stack.peekFirst()
             enterDestination?.popEnter(popEnterScenes[enterDestination])
 
             poppedDestination.popExit(popExitScenes[poppedDestination])
@@ -57,7 +62,6 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
 
         return false
     }
-
 
     class Destination(navigator: Navigator<*>, private val container: ViewGroup, private val viewFactory: (Int) -> MotionLayout): NavDestination(navigator){
         companion object {
@@ -120,6 +124,13 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
         fun popExit(sceneInfo: SceneInfo? = null) {
             removeOnComplete()
             transition(sceneInfo ?: defaultScenes.popExit)
+        }
+
+        fun isActive(): Boolean{
+            for (index in container.childCount downTo 0) {
+                if (container.getChildAt(index) == view) return true
+            }
+            return false
         }
 
         private fun removeOnComplete(){
