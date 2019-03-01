@@ -31,6 +31,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        findNavController(R.id.navHost).popBackStack()
+        with (findNavController(R.id.navHost)){
+            popBackStack()
+            if (currentDestination == null) finishAfterTransition()
+        }
     }
 }
