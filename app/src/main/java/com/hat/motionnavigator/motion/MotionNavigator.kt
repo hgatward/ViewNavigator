@@ -16,6 +16,8 @@ import java.util.*
 @Navigator.Name("motion_layout")
 class MotionNavigator(private val container: ViewGroup, private val viewFactory: (Int) -> MotionLayout): Navigator<MotionNavigator.Destination>() {
     private val stack: Deque<Destination> = ArrayDeque()
+    private val popEnterScenes: MutableMap<Destination, SceneInfo> = mutableMapOf()
+    private val popExitScenes: MutableMap<Destination, SceneInfo> = mutableMapOf()
 
     override fun navigate(
         destination: Destination,
@@ -26,8 +28,15 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
         val previous = stack.peek()
         stack.push(destination)
 
-        destination.enter()
-        previous?.exit()
+        val extras = (navigatorExtras as? Extras)
+
+        destination.enter(extras?.enter)
+        previous?.exit(extras?.exit)
+
+        extras?.run {
+            if (popEnter != null) popEnterScenes[destination] = popEnter
+            if (popExit != null) popExitScenes[destination] = popExit
+        }
 
         return destination
     }
@@ -36,11 +45,13 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
         Destination(this, container, viewFactory)
 
     override fun popBackStack(): Boolean {
-        val popped = stack.pollFirst()
+        val poppedDestination: Destination? = stack.pollFirst()
 
-        if (popped != null) {
-            stack.peekFirst()?.popEnter(container)
-            popped.popExit()
+        if (poppedDestination != null) {
+            val enterDestination: Destination? = stack.peekFirst()
+            enterDestination?.popEnter(popEnterScenes[enterDestination])
+
+            poppedDestination.popExit(popExitScenes[poppedDestination])
             return true
         }
 
@@ -55,7 +66,7 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
 
         lateinit var view: MotionLayout
 
-        private lateinit var sceneInfo: SceneInfo
+        private lateinit var defaultScenes: DefaultScenes
 
         override fun onInflate(context: Context, attrs: AttributeSet) {
             super.onInflate(context, attrs)
@@ -80,8 +91,7 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
                     NOT_FOUND
                 ).nullIfNotFound()
 
-                val sceneResIds = SceneResIds(enterResId, exitResId, popEnterResId, popExitResId)
-                sceneInfo = SceneInfo.inferFromResourceIds(sceneResIds)
+                defaultScenes = DefaultScenes.inferFromResourceIds(enterResId, exitResId, popEnterResId, popExitResId)
 
                 recycle()
             }
@@ -92,24 +102,24 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
         private fun Int.require(attrName: String): Int = if (this == NOT_FOUND) throw IllegalStateException("MotionNavigator.Destination requires a motion scene for attribute $attrName") else this
         private fun Int.nullIfNotFound(): Int? = if (this == NOT_FOUND) null else this
 
-        fun enter(){
+        fun enter(sceneInfo: SceneInfo? = null){
             container.addView(view)
-            transition(sceneInfo.enter)
+            transition(sceneInfo ?: defaultScenes.enter)
         }
 
-        fun exit(){
+        fun exit(sceneInfo: SceneInfo? = null){
             removeOnComplete()
-            transition(sceneInfo.exit.id, sceneInfo.exit.reverse)
+            transition(sceneInfo ?: defaultScenes.exit)
         }
 
-        fun popEnter(container: ViewGroup) {
+        fun popEnter(sceneInfo: SceneInfo? = null) {
             container.addView(view)
-            transition(sceneInfo.popEnter)
+            transition(sceneInfo ?: defaultScenes.popEnter)
         }
 
-        fun popExit() {
+        fun popExit(sceneInfo: SceneInfo? = null) {
             removeOnComplete()
-            transition(sceneInfo.popExit.id, sceneInfo.popExit.reverse)
+            transition(sceneInfo ?: defaultScenes.popExit)
         }
 
         private fun removeOnComplete(){
@@ -126,6 +136,8 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
             })
         }
 
+        private fun transition(sceneInfo: SceneInfo) = transition(sceneInfo.id, sceneInfo.reverse)
+
         private fun transition(sceneResId: Int, reverse: Boolean = false){
             with (view) {
                 loadLayoutDescription(sceneResId)
@@ -140,10 +152,10 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
 
     }
 
-    private data class IdAndReverse(val id: Int, val reverse: Boolean)
-    private data class SceneInfo(val enter: Int, val exit: IdAndReverse, val popEnter: Int, val popExit: IdAndReverse){
+    data class SceneInfo(val id: Int, val reverse: Boolean)
+    private data class DefaultScenes(val enter: SceneInfo, val exit: SceneInfo, val popEnter: SceneInfo, val popExit: SceneInfo){
         companion object {
-            fun inferFromResourceIds(sceneResIds: SceneResIds): SceneInfo = with (sceneResIds) {
+            fun inferFromResourceIds(enterResId: Int, exitResId: Int? = null, popEnterResId: Int? = null, popExitResId: Int? = null): DefaultScenes {
                 //If not found use defaultEnterScene reversed
                 val exit = exitResId?.notReversed() ?: enterResId.reversed()
 
@@ -158,16 +170,13 @@ class MotionNavigator(private val container: ViewGroup, private val viewFactory:
                  */
                 val popExit = popExitResId?.notReversed() ?: popEnterResId?.reversed() ?: exit
 
-                return SceneInfo(enterResId, exit, popEnter, popExit)
+                return DefaultScenes(enterResId.notReversed(), exit, popEnter.notReversed(), popExit)
             }
 
-            private fun Int.reversed() = IdAndReverse(this, true)
-            private fun Int.notReversed() = IdAndReverse(this, false)
+            private fun Int.reversed() = SceneInfo(this, true)
+            private fun Int.notReversed() = SceneInfo(this, false)
         }
     }
 
-    data class SceneResIds(val enterResId: Int, val exitResId: Int? = null, val popEnterResId: Int? = null, val popExitResId: Int? = null)
-    data class Extras(val sceneResIds: SceneResIds): Navigator.Extras{
-        constructor(enterResId: Int, exitResId: Int? = null, popEnterResId: Int? = null, popExitResId: Int? = null): this(SceneResIds(enterResId, exitResId, popEnterResId, popExitResId))
-    }
+    data class Extras(val enter: SceneInfo? = null, val exit: SceneInfo? = null, val popEnter: SceneInfo? = null, val popExit: SceneInfo? = null): Navigator.Extras
 }
