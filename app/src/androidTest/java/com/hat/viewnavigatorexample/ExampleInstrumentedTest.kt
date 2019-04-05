@@ -1,4 +1,4 @@
-package com.hat.motionnavigator
+package com.hat.viewnavigatorexample
 
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4

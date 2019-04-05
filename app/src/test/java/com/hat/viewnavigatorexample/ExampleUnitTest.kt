@@ -1,4 +1,4 @@
-package com.hat.motionnavigator
+package com.hat.viewnavigatorexample
 
 import org.junit.Test
 

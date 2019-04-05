@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="navGraph" format="reference"/>
+
+    <declare-styleable name="NavHostView">
+        <attr name="navGraph"/>
+    </declare-styleable>
+
+    <declare-styleable name="CompositeNavHostFragment">
+        <attr name="navGraph"/>
+    </declare-styleable>
+</resources>
