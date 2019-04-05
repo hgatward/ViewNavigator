@@ -6,7 +6,7 @@
         <attr name="navGraph"/>
     </declare-styleable>
 
-    <declare-styleable name="CompositeNavHostFragment">
+    <declare-styleable name="CompositeNavHost">
         <attr name="navGraph"/>
     </declare-styleable>
 </resources>

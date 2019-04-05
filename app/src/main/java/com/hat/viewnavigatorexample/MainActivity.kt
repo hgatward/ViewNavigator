@@ -3,7 +3,7 @@ package com.hat.viewnavigatorexample
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.transition.ChangeBounds
-import com.hat.viewnavigator.CompositeNavHostFragment
+import com.hat.viewnavigator.CompositeNavHost
 import com.hat.viewnavigator.NavTransition
 import com.hat.viewnavigator.ViewNavigator
 import kotlinx.android.synthetic.main.activity_main.*
@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        (navHost as CompositeNavHostFragment).install(this, destinations, NavTransition.ViewTweens(this, R.anim.view_nav_default_enter_anim, R.anim.view_nav_default_exit_anim))
+        (navHost as CompositeNavHost).install(this, destinations, NavTransition.ViewTweens(this, R.anim.view_nav_default_enter_anim, R.anim.view_nav_default_exit_anim))
         //navHost.setGraph(this, destinations, NavTransition.ViewTweens(this, R.anim.view_nav_default_enter_anim, R.anim.view_nav_default_exit_anim))
     }
 }

@@ -12,9 +12,8 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.NavHost
 import androidx.navigation.Navigation
-import androidx.navigation.fragment.FragmentNavigator
 
-class CompositeNavHostFragment : Fragment(), NavHost {
+class CompositeNavHost : Fragment(), NavHost {
     companion object {
         const val KEY_NAV_CONTROLLER_STATE = "navControllerState"
     }
@@ -23,13 +22,6 @@ class CompositeNavHostFragment : Fragment(), NavHost {
 
     private var hasSetGraph = false
     private var graphResId: Int? = null
-
-    val onBackPressed: () -> Boolean = {
-        navController.run {
-            popBackStack()
-            currentDestination != null
-        }
-    }
 
     fun install(
         activity: AppCompatActivity,
@@ -66,7 +58,7 @@ class CompositeNavHostFragment : Fragment(), NavHost {
 
         with(context.obtainStyledAttributes(attrs, R.styleable.CompositeNavHostFragment)) {
             graphResId = getResourceId(R.styleable.CompositeNavHostFragment_navGraph, 0)
-            if (graphResId == 0) throw IllegalStateException("No graph id set for CompositeNavHostFragment")
+            if (graphResId == 0) throw IllegalStateException("No graph id set for CompositeNavHost")
         }
     }
 
@@ -78,7 +70,7 @@ class CompositeNavHostFragment : Fragment(), NavHost {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val view = FrameLayout(inflater.context).apply { id = this@CompositeNavHostFragment.id }
+        val view = FrameLayout(inflater.context).apply { id = this@CompositeNavHost.id }
         Navigation.setViewNavController(view, navController)
         return view
     }
