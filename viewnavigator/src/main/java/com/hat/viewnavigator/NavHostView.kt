@@ -17,13 +17,6 @@ class NavHostView(context: Context, attrs: AttributeSet? = null): FrameLayout(co
         const val KEY_NAV_CONTROLLER_STATE = "navControllerState"
     }
 
-    private val onBackPressed: () -> Boolean = {
-        navController.run {
-            popBackStack()
-            currentDestination != null
-        }
-    }
-
     private val navController = NavController(context)
     private val graphResId: Int
     private var hasSetGraph = false

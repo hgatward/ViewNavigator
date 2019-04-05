@@ -56,8 +56,8 @@ class CompositeNavHost : Fragment(), NavHost {
     override fun onInflate(context: Context, attrs: AttributeSet, savedInstanceState: Bundle?) {
         super.onInflate(context, attrs, savedInstanceState)
 
-        with(context.obtainStyledAttributes(attrs, R.styleable.CompositeNavHostFragment)) {
-            graphResId = getResourceId(R.styleable.CompositeNavHostFragment_navGraph, 0)
+        with(context.obtainStyledAttributes(attrs, R.styleable.CompositeNavHost)) {
+            graphResId = getResourceId(R.styleable.CompositeNavHost_navGraph, 0)
             if (graphResId == 0) throw IllegalStateException("No graph id set for CompositeNavHost")
         }
     }
