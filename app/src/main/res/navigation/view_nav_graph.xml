@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/view_nav_graph"
     app:startDestination="@id/squareLittle">
 
-    <view
-        android:id="@+id/squareLittle"/>
+
 
     <view
-        android:id="@+id/squareBig"/>
+        android:id="@+id/squareLittle"
+        tools:layout="@layout/square_little"/>
+
+    <view
+        android:id="@+id/squareBig"
+        tools:layout="@layout/square_big"/>
+
     <fragment
         android:id="@+id/aFragment"
         android:name="com.hat.viewnavigatorexample.AFragment"
-        android:label="AFragment" />
+        android:label="AFragment"
+        tools:layout="@layout/afragment"/>
 
 
 </navigation>
