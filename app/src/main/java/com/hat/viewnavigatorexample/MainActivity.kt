@@ -15,15 +15,16 @@ class MainActivity : AppCompatActivity() {
 
         val destinations = ViewNavigator.destinations {
             destination<SquareLittle>(R.id.squareLittle) {
-                view(SquareLittle(this@MainActivity))
+                view { SquareLittle(this@MainActivity) }
                 defaultTransitions(NavTransition.ToEndScene(ChangeBounds()))
             }
 
             destination<SquareBig>(R.id.squareBig) {
-                view(SquareBig(this@MainActivity))
+                view { SquareBig(this@MainActivity) }
                 //defaultTransitions(NavTransition.ToEndScene(ChangeBounds()))
             }
         }
+
 
         (navHost as CompositeNavHost).install(this, destinations, NavTransition.ViewTweens(this, R.anim.view_nav_default_enter_anim, R.anim.view_nav_default_exit_anim))
         //navHost.setGraph(this, destinations, NavTransition.ViewTweens(this, R.anim.view_nav_default_enter_anim, R.anim.view_nav_default_exit_anim))

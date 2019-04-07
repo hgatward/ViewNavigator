@@ -6,20 +6,24 @@
     app:startDestination="@id/squareLittle">
 
 
-
     <view
         android:id="@+id/squareLittle"
-        tools:layout="@layout/square_little"/>
+        tools:layout="@layout/square_little" />
 
     <view
         android:id="@+id/squareBig"
-        tools:layout="@layout/square_big"/>
+        tools:layout="@layout/square_big">
+
+        <action
+            android:id="@+id/action_squareBig_to_aFragment"
+            app:destination="@id/aFragment" />
+    </view>
 
     <fragment
         android:id="@+id/aFragment"
         android:name="com.hat.viewnavigatorexample.AFragment"
         android:label="AFragment"
-        tools:layout="@layout/afragment"/>
+        tools:layout="@layout/afragment" />
 
 
 </navigation>

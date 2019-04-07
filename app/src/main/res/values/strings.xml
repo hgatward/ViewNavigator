@@ -1,4 +1,15 @@
 <resources>
     <string name="app_name">View Navigator</string>
     <string name="a">A</string>
+    <string name="b">B</string>
+
+    <string name="noTransitionMessage">Choose a transition</string>
+
+    <string name="navigate">navigate</string>
+    <string name="toEndScene">To end scene</string>
+    <string name="toEndConstraints">To end constraints</string>
+    <string name="constraints">Constraints</string>
+    <string name="animators">Animators</string>
+    <string name="viewTweens">View tweens</string>
+    <string name="customAnimator">Custom animator</string>
 </resources>
