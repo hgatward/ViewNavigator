@@ -41,6 +41,15 @@ interface NavTransition<From : View, To : View> : (NavTransition.Context, ViewGr
         }
     }
 
+    class NoTransition<From: View, To: View> : NavTransition<From, To> {
+        override fun NavTransition.Context.transition(container: ViewGroup, from: From, to: To) {
+            dispatchTransitionStarted()
+            container.addView(to)
+            container.removeView(from)
+            dispatchTransitionEnded()
+        }
+    }
+
     class ToEndScene<From : View, To : View>(private val transition: Transition = AutoTransition()) :
         NavTransition<From, To> {
         override fun Context.transition(container: ViewGroup, from: From, to: To) {
@@ -58,7 +67,6 @@ interface NavTransition<From : View, To : View> : (NavTransition.Context, ViewGr
         override fun Context.transition(container: ViewGroup, from: From, to: To) {
             dispatchTransitionStarted()
 
-            val fromConstraints = ConstraintSet().apply { clone(from) }
             val toConstraints = ConstraintSet().apply { clone(to) }
 
             container.addView(to)
@@ -66,7 +74,7 @@ interface NavTransition<From : View, To : View> : (NavTransition.Context, ViewGr
             Handler().post {
                 TransitionManager.beginDelayedTransition(
                     container,
-                    transition.addListener(Listener(this, container, from, to, fromConstraints, toConstraints))
+                    transition.addListener(Listener(this, container, from))
                 )
                 toConstraints.applyTo(to)
                 exitToConstraints.applyTo(from)
@@ -77,17 +85,10 @@ interface NavTransition<From : View, To : View> : (NavTransition.Context, ViewGr
         private class Listener(
             context: Context,
             private val container: ViewGroup,
-            private val from: ConstraintLayout,
-            private val to: ConstraintLayout,
-            private val fromConstraints: ConstraintSet,
-            private val toConstraints: ConstraintSet
+            private val from: ConstraintLayout
         ) : Context.TransitionListener(context) {
             override fun onTransitionEnd(transition: Transition) {
                 container.removeView(from)
-
-                //Reset constraints
-                fromConstraints.applyTo(from)
-                toConstraints.applyTo(to)
                 super.onTransitionEnd(transition)
             }
         }
@@ -96,12 +97,11 @@ interface NavTransition<From : View, To : View> : (NavTransition.Context, ViewGr
     class ToEndConstraints<From : ConstraintLayout, To : ConstraintLayout>(private val transition: Transition = AutoTransition()) :
         NavTransition<From, To> {
         override fun Context.transition(container: ViewGroup, from: From, to: To) {
-            val fromConstraints = ConstraintSet().apply { clone(from) }
             val toConstraints = ConstraintSet().apply { clone(to) }
 
             TransitionManager.beginDelayedTransition(
                 container,
-                transition.addListener(Listener(this, container, from, to, fromConstraints))
+                transition.addListener(Listener(this, container, from, to))
             )
             toConstraints.applyTo(from)
         }
@@ -110,8 +110,7 @@ interface NavTransition<From : View, To : View> : (NavTransition.Context, ViewGr
             context: Context,
             private val container: ViewGroup,
             private val from: ConstraintLayout,
-            private val to: ConstraintLayout,
-            private val fromConstraints: ConstraintSet
+            private val to: ConstraintLayout
         ) : Context.TransitionListener(context) {
             override fun onTransitionEnd(transition: Transition) {
                 super.onTransitionEnd(transition)
@@ -119,9 +118,6 @@ interface NavTransition<From : View, To : View> : (NavTransition.Context, ViewGr
 
                 container.addView(to)
                 container.removeView(from)
-
-                //Revert from constraints to what they were before the transition
-                fromConstraints.applyTo(from)
             }
         }
     }
