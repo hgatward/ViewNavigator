@@ -44,8 +44,8 @@ class ViewNavigator(
             lateinit var viewFactory: () -> V
             var transitionsFactory: (() -> ViewNavigator.Destination.Transitions<V>)? = null
 
-            fun view(view: V){
-                viewFactory = { view }
+            fun view(view: () -> V){
+                viewFactory = view
             }
 
             fun defaultTransitions(transition: NavTransition<View, V>, popTransition: NavTransition<View, V> = transition){
@@ -58,7 +58,7 @@ class ViewNavigator(
     private val popTransitions: MutableMap<Pair<Destination, Destination>, NavTransition<View, View>> =
         mutableMapOf()
 
-    private val noTransition = NoTransition()
+    private val noTransition = NavTransition.NoTransition<View, View>()
 
     override fun navigate(
         to: Destination,
@@ -115,13 +115,31 @@ class ViewNavigator(
         navigator: Navigator<Destination>,
         private val onInflateListener: (Destination) -> Unit
     ) : NavDestination(navigator) {
-        lateinit var view: View
+        //lateinit var view: View
+        private var _view: View? = null
+
+        val view: View
+            get() {
+                val currentView = _view
+
+                return if (currentView == null) {
+                    val newView = viewFactory()
+                    _view = newView
+                    newView
+                } else currentView
+            }
+
+        private lateinit var viewFactory: () -> View
         var defaultTransitions: Transitions<View>? = null
         var isInTransition: Boolean = false
 
         override fun onInflate(context: Context, attrs: AttributeSet) {
             super.onInflate(context, attrs)
             onInflateListener(this)
+        }
+
+        fun releaseView(){
+            _view = null
         }
 
         class Transitions<V : View>(
@@ -134,33 +152,23 @@ class ViewNavigator(
             private val defaultTransitionFactory: (() -> Transitions<V>)? = null
         ) {
             fun inject(destination: Destination) {
-                with(destination) {
-                    view = viewFactory()
-                    defaultTransitions = defaultTransitionFactory?.invoke() as Transitions<View>?
-                }
+                destination.viewFactory = viewFactory
+                destination.defaultTransitions = defaultTransitionFactory?.invoke() as Transitions<View>?
             }
         }
     }
 
-    private class DispatchDestinationState(private val first: Destination, private val second: Destination) :
+    private class DispatchDestinationState(private val from: Destination, private val to: Destination) :
         NavTransition.Context {
         override fun dispatchTransitionStarted() {
-            first.isInTransition = true
-            second.isInTransition = true
+            from.isInTransition = true
+            to.isInTransition = true
         }
 
         override fun dispatchTransitionEnded() {
-            first.isInTransition = false
-            second.isInTransition = false
-        }
-    }
-
-    private class NoTransition : NavTransition<View, View> {
-        override fun NavTransition.Context.transition(container: ViewGroup, from: View, to: View) {
-            dispatchTransitionStarted()
-            container.addView(to)
-            container.removeView(from)
-            dispatchTransitionEnded()
+            from.isInTransition = false
+            to.isInTransition = false
+            from.releaseView()
         }
     }
 

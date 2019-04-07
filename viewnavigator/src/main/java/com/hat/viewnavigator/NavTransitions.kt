@@ -13,29 +13,29 @@ open class NavTransitions<From : View, To : View>(
     val popTransition: NavTransition<To, From>
 ) : Navigator.Extras {
     companion object {
-        fun <From : View, To : View> sceneTransitions(
-            transition: android.transition.Transition,
+        fun <From : View, To : View> toEndScene(
+            transition: android.transition.Transition = AutoTransition(),
             popTransition: android.transition.Transition = transition.clone()
         ) = NavTransitions<From, To>(NavTransition.ToEndScene(transition), NavTransition.ToEndScene(popTransition))
 
-        fun <From : ConstraintLayout, To : ConstraintLayout> constraintSetTransitions(
+        fun <From : ConstraintLayout, To : ConstraintLayout> toEndConstraints(
             transition: android.transition.Transition = AutoTransition(),
             popTransition: android.transition.Transition = transition.clone()
         ) = NavTransitions<From, To>(NavTransition.ToEndConstraints(transition), NavTransition.ToEndConstraints(popTransition))
 
-        fun <From: ConstraintLayout, To: ConstraintLayout> constraintSetTransitions2(
-            transition: android.transition.Transition = AutoTransition(),
-            popTransition: android.transition.Transition = transition.clone(),
+        fun <From: ConstraintLayout, To: ConstraintLayout> constraints(
             enterFromConstraints: ConstraintSet,
             exitToConstraints: ConstraintSet,
             popEnterFromConstraints: ConstraintSet,
-            popExitConstraints: ConstraintSet
+            popExitConstraints: ConstraintSet,
+            transition: android.transition.Transition = AutoTransition(),
+            popTransition: android.transition.Transition = transition.clone()
         ) = NavTransitions<From, To>(
             NavTransition.ConstraintSets(enterFromConstraints, exitToConstraints, transition),
             NavTransition.ConstraintSets(popEnterFromConstraints, popExitConstraints, popTransition)
         )
 
-        fun <From : View, To : View> viewAnimations(
+        fun <From : View, To : View> viewTweens(
             enterAnim: Animation,
             exitAnim: Animation,
             popEnterAnim: Animation,
