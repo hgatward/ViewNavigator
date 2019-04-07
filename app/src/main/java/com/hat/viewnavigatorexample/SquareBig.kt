@@ -10,6 +10,6 @@ import kotlinx.android.synthetic.main.square_big.view.*
 class SquareBig(context: Context, attrs: AttributeSet? = null): ConstraintLayout(context, attrs){
     init {
         View.inflate(context, R.layout.square_big, this)
-        square.setOnClickListener { findNavController().navigate(R.id.aFragment) }
+        square.setOnClickListener { findNavController().navigate(R.id.action_squareBig_to_aFragment) }
     }
 }
