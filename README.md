@@ -1,66 +1,149 @@
-# MotionNavigator
-A navigator for motion layouts.
+# ViewNavigator
+A navigator for custom views with transition support.
 
 ### Quick example
 
+#### Nav Host
 Add this to your root layout (e.g. activity_main)
 ```xml
-<com.hat.motionnavigator.motion.MotionNavHost
+<fragment
     android:id="@+id/navHost"
+    android:name="com.hat.viewnavigator.CompositeNavHost"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    app:navGraph="@navigation/nav_graph" />
+    app:navGraph="@navigation/view_nav_graph" />
 ```
 
+#### Nav Graph
 Create your nav_graph
 ```xml
 <navigation
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/motion_nav_graph"
+    android:id="@+id/view_nav_graph"
     app:startDestination="@+id/first_page">
 
-    <motion_layout
-        android:id="@+id/first_page"
-        app:defaultEnterScene="@xml/first_page_enter"/>
+    <view
+        android:id="@+id/squareLittle"
+        tools:layout="@layout/square_little" />
 
-
-    <motion_layout
-        android:id="@+id/second_page"
-        app:defaultEnterScene="@xml/second_page_enter"/>
+    <view
+        android:id="@+id/squareBig"
+        tools:layout="@layout/square_big">    
 </navigation>
 ```
 
-Create views (MotionLayouts) when given destinations
+#### Destinations
+Set up your destinations and install them on the nav host
 ```kotlin
-navHost.createsViewsBy { destinationId ->
-    when (destinationId) {
-        R.id.first_page -> //create view for first_page
-        R.id.second_page -> //create view for second_page
-        else -> throw IllegalStateException("No view for destination: $destinationId")
+val destinations = ViewNavigator.destinations {
+    destination<SquareLittle>(R.id.squareLittle) {
+        view { SquareLittle(this@MainActivity) }
+        defaultTransition { NavTransition.ToEndScene(ChangeBounds()) }
+    }
+
+    destination<SquareBig>(R.id.squareBig) {
+        view { SquareBig(this@MainActivity) }
+    }
+}
+
+val fallbackTransition = NavTransition.ViewTweens<View, View>(
+    this, 
+    R.anim.view_nav_default_enter_anim, 
+    R.anim.view_nav_default_exit_anim
+)
+
+(navHost as CompositeNavHost).install(this, destinations, fallbackTransition)
+```
+
+#### Navigate
+```kotlin
+val transitions = NavTransitions.toEndScene<SquareLittle, SquareBig>(transition)
+findNavController().navigate(R.id.squareBig, null, null, transitions)
+```
+
+### Transitions
+The NavTransition interface defines a transition between two views.
+NavTransitions takes 2 NavTransition instances: transition and popTransition.
+
+val transitions: NavTransitions = ...
+Pretend we're on destination A and we call navigate(B, null, null, transitions)
+
+'transition' will be used to transition from A to B
+'popTransition' will be stored to be used when the user pops from B back to A.
+
+|Transition|Description|
+|----------|-----------|
+|NoTransition|Simply adds/removes the new/previous destination views|
+|ToEndScene|Transitions from the current scene to the new destination|
+|ConstraintSets|Transitions the previous destination to the exitToConstraints and transitions to the new destination from enterFromConstraints|
+|ToEndConstraints|Gets the constraints from the new destination. Transitions the previous destination to these constraints before adding the new destination|
+|PropertyAnimators|Transitions the new destination using enterAnim and the previous destination using exitAnim|
+|ViewTweens|Uses view tween animations|
+
+Often we want to use the same transition and popTransitions. NavTransitions defines a set of static functions to use the above transitions for both the transition and popTransition, i.e.
+
+- toEndScene()
+- toEndConstraints()
+- constraints()
+- viewTweens()
+- animators()
+
+#### Custom Transition
+You can create your own custom NavTransition classes:
+```kotlin
+private class CustomTransition: NavTransition<SquareLittle, SquareBig> {
+    override fun NavTransition.Context.transition(container: ViewGroup, from: SquareLittle, to: SquareBig) {
+        dispatchTransitionStarted()
+        container.addView(to)
+
+        val exitAnim = ObjectAnimator.ofPropertyValuesHolder(
+            from.square,
+            PropertyValuesHolder.ofFloat(View.X, 0f),
+            PropertyValuesHolder.ofFloat(View.ALPHA, 0f)
+        ).apply {
+            duration = 300
+        }
+
+        val enterAnim = ObjectAnimator.ofPropertyValuesHolder(
+            to.square,
+            PropertyValuesHolder.ofFloat(View.TRANSLATION_X, 500f, 0f),
+            PropertyValuesHolder.ofFloat(View.ALPHA, 0f, 1f)
+        ).apply {
+            duration = 300
+        }
+
+        val fadeOutChipGroup = ObjectAnimator.ofFloat(from.transitionChoiceGroup, View.ALPHA, 0f)
+
+        AnimatorSet().apply {
+            playTogether(exitAnim, enterAnim, fadeOutChipGroup)
+            addListener(NavTransition.PropertyAnimators.ExitListener(this@transition, container, from))
+            start()
+        }
     }
 }
 ```
+- Call dispatchTransitionStarted() when the transition starts so the view navigator knows which destinations are mid-transition
+- Add 'to' to the container and remove 'from' from the container before the transition ends.
+- Call dispatchTransitionEnded() when the transition ends.
 
-### Description
-Each motion_layout tag has MotionScene's referred to by the following attributes:
-- defaultEnterScene
-- defaultExitScene
-- defaultPopEnterScene
-- defaultPopExitScene
+### Fragment Support
+There are two different NavHosts: CompositeNavHost and NavHostView.
+NavHostView only adds a ViewNavigator to the navController. However, CompositeNavHost adds both a ViewNavigator and a FragmentNavigator (FullyPoppableFragmentNavigator because the base FragmentNavigator never pops the first fragment on the stack).
 
-defaultEnterScene is required. All other attribubtes are inferred if not set.
-- defaultExitScene will use defaultEnterScene reversed
-- defaultPopEnterScene will use defaultEnterScene
-- defaultPopExitScene will use defaultPopEnterScene reversed if found, or defaultExitScene (which may be the reverse of defaultEnterScene)
+Using the CompositeNavHost means you can add fragment destinations to your nav graph. 
+However, currently after navigating to a fragment destination from a view destination they will live simultaenously. And the fragment will simply be above the view so ensure its clickable and opaque.
 
 ### WIP
-This is a work in progress... 
+This is a work in progress...
 
-#### TODO:
-- Provide MotionScenes as Extras when navigating.
-To allow for different transitions when navigating to certain destinations (rather than the default/fallback scenes listed in the nav graph)
-- Save/restore state in MotionNavHost
-- Testtt - it isn't tested (and breaks)
+- Can't pop a destination when it's mid transition??? Add support for different types of pop behaviour mid transition, i.e. popMidTransitionBehaviour = ignoreTransition, cancelTransition...
+- Better fragment support
+- Test...
+- View destination layout preview
+- Type safety
 - ...
+
+### Should I Use This?
+Probably not :/
