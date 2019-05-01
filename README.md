@@ -128,8 +128,22 @@ private class CustomTransition: NavTransition<SquareLittle, SquareBig> {
 - Add 'to' to the container and remove 'from' from the container before the transition ends.
 - Call dispatchTransitionEnded() when the transition ends.
 
-### Description
+### Fragment Support
+There are two different NavHosts: CompositeNavHost and NavHostView.
+NavHostView only adds a ViewNavigator to the navController. However, CompositeNavHost adds both a ViewNavigator and a FragmentNavigator (FullyPoppableFragmentNavigator because the base FragmentNavigator never pops the first fragment on the stack).
 
+Using the CompositeNavHost means you can add fragment destinations to your nav graph. 
+However, currently after navigating to a fragment destination from a view destination they will live simultaenously. And the fragment will simply be above the view so ensure its clickable and opaque.
 
 ### WIP
-This is a work in progress... 
+This is a work in progress...
+
+- Can't pop a destination when it's mid transition??? Add support for different types of pop behaviour mid transition, i.e. popMidTransitionBehaviour = ignoreTransition, cancelTransition...
+- Better fragment support
+- Test...
+- View destination layout preview
+- Type safety
+- ...
+
+### Should I Use This?
+Probably not :/
