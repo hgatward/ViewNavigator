@@ -13,8 +13,8 @@
         app:navGraph="@navigation/view_nav_graph" />-->
     <fragment
         android:id="@+id/navHost"
+        android:name="com.hat.viewnavigator.CompositeNavHost"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:name="com.hat.viewnavigator.CompositeNavHost"
-        app:navGraph="@navigation/view_nav_graph"/>
+        app:navGraph="@navigation/view_nav_graph" />
 </androidx.constraintlayout.widget.ConstraintLayout>

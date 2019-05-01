@@ -42,14 +42,25 @@ class ViewNavigator(
 
         class DestinationContext<V: View>{
             lateinit var viewFactory: () -> V
-            var transitionsFactory: (() -> ViewNavigator.Destination.Transitions<V>)? = null
+            private var transitionFactory: (() -> NavTransition<View, V>)? = null
+            private var popTransitionFactory: (() -> NavTransition<View, V>)? = null
+
+            val transitionsFactory: (() -> ViewNavigator.Destination.Transitions<V>)
+                get() = {
+                    ViewNavigator.Destination.Transitions(transitionFactory?.invoke() ?: NavTransition.NoTransition(), popTransitionFactory?.invoke() ?: NavTransition.NoTransition())
+                }
 
             fun view(view: () -> V){
                 viewFactory = view
             }
 
-            fun defaultTransitions(transition: NavTransition<View, V>, popTransition: NavTransition<View, V> = transition){
-                transitionsFactory = { ViewNavigator.Destination.Transitions(transition, popTransition) }
+            fun defaultTransition(useAsPop: Boolean = true, transition: () -> NavTransition<View, V>) {
+                transitionFactory = transition
+                if (useAsPop) popTransitionFactory = transition
+            }
+
+            fun defaultPopTransition(popTransition: () -> NavTransition<View, V>) {
+                popTransitionFactory = popTransition
             }
         }
     }
@@ -60,6 +71,7 @@ class ViewNavigator(
 
     private val noTransition = NavTransition.NoTransition<View, View>()
 
+    @Suppress("unchecked_cast")
     override fun navigate(
         to: Destination,
         args: Bundle?,
@@ -151,6 +163,7 @@ class ViewNavigator(
             private val viewFactory: () -> V,
             private val defaultTransitionFactory: (() -> Transitions<V>)? = null
         ) {
+            @Suppress("unchecked_cast")
             fun inject(destination: Destination) {
                 destination.viewFactory = viewFactory
                 destination.defaultTransitions = defaultTransitionFactory?.invoke() as Transitions<View>?

@@ -3,6 +3,7 @@ package com.hat.viewnavigatorexample
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.transition.ChangeBounds
+import android.view.View
 import com.hat.viewnavigator.CompositeNavHost
 import com.hat.viewnavigator.NavTransition
 import com.hat.viewnavigator.ViewNavigator
@@ -16,17 +17,16 @@ class MainActivity : AppCompatActivity() {
         val destinations = ViewNavigator.destinations {
             destination<SquareLittle>(R.id.squareLittle) {
                 view { SquareLittle(this@MainActivity) }
-                defaultTransitions(NavTransition.ToEndScene(ChangeBounds()))
+                defaultTransition { NavTransition.ToEndScene(ChangeBounds()) }
             }
 
             destination<SquareBig>(R.id.squareBig) {
                 view { SquareBig(this@MainActivity) }
-                //defaultTransitions(NavTransition.ToEndScene(ChangeBounds()))
             }
         }
 
+        val fallbackTransition = NavTransition.ViewTweens<View, View>(this, R.anim.view_nav_default_enter_anim, R.anim.view_nav_default_exit_anim)
 
-        (navHost as CompositeNavHost).install(this, destinations, NavTransition.ViewTweens(this, R.anim.view_nav_default_enter_anim, R.anim.view_nav_default_exit_anim))
-        //navHost.setGraph(this, destinations, NavTransition.ViewTweens(this, R.anim.view_nav_default_enter_anim, R.anim.view_nav_default_exit_anim))
+        (navHost as CompositeNavHost).install(this, destinations, fallbackTransition)
     }
 }
