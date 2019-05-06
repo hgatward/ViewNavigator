@@ -35,7 +35,7 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.1.0-alpha3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha3'
 
-    def nav_version = "1.0.0-rc01"
-    implementation "android.arch.navigation:navigation-fragment-ktx:$nav_version"
+    def nav_version = "2.1.0-alpha02"
+    implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
     implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha3'
 }

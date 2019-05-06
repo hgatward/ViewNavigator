@@ -13,7 +13,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHost
 import androidx.navigation.Navigation
 
-class CompositeNavHost : Fragment(), NavHost {
+open class CompositeNavHost : Fragment(), NavHost {
     companion object {
         const val KEY_NAV_CONTROLLER_STATE = "navControllerState"
     }

@@ -11,7 +11,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHost
 import androidx.navigation.Navigation
 
-class NavHostView(context: Context, attrs: AttributeSet? = null): FrameLayout(context, attrs), NavHost {
+open class NavHostView(context: Context, attrs: AttributeSet? = null): FrameLayout(context, attrs), NavHost {
     companion object {
         const val KEY_VIEW_STATE = "viewState"
         const val KEY_NAV_CONTROLLER_STATE = "navControllerState"
