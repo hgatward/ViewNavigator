@@ -29,39 +29,39 @@ class ViewNavigator(
                 context.map[destinationId] ?: throw IllegalStateException("No destination injector for id: $destinationId")
             }
         }
+    }
 
-        class DestinationsContext{
-            val map: MutableMap<Int, ViewNavigator.Destination.Injector<out View>> = mutableMapOf()
+    class DestinationsContext{
+        val map: MutableMap<Int, ViewNavigator.Destination.Injector<out View>> = mutableMapOf()
 
-            fun <V: View> destination(id: Int, init: DestinationContext<V>.() -> Unit){
-                val context = DestinationContext<V>()
-                context.init()
-                map[id] = ViewNavigator.Destination.Injector(context.viewFactory, context.transitionsFactory)
+        fun <V: View> destination(id: Int, init: DestinationContext<V>.() -> Unit){
+            val context = DestinationContext<V>()
+            context.init()
+            map[id] = ViewNavigator.Destination.Injector(context.viewFactory, context.transitionsFactory)
+        }
+    }
+
+    class DestinationContext<V: View>{
+        lateinit var viewFactory: () -> V
+        private var transitionFactory: (() -> NavTransition<View, V>)? = null
+        private var popTransitionFactory: (() -> NavTransition<View, V>)? = null
+
+        val transitionsFactory: (() -> ViewNavigator.Destination.Transitions<V>)
+            get() = {
+                ViewNavigator.Destination.Transitions(transitionFactory?.invoke() ?: NavTransition.NoTransition(), popTransitionFactory?.invoke() ?: NavTransition.NoTransition())
             }
+
+        fun view(view: () -> V){
+            viewFactory = view
         }
 
-        class DestinationContext<V: View>{
-            lateinit var viewFactory: () -> V
-            private var transitionFactory: (() -> NavTransition<View, V>)? = null
-            private var popTransitionFactory: (() -> NavTransition<View, V>)? = null
+        fun defaultTransition(useAsPop: Boolean = true, transition: () -> NavTransition<View, V>) {
+            transitionFactory = transition
+            if (useAsPop) popTransitionFactory = transition
+        }
 
-            val transitionsFactory: (() -> ViewNavigator.Destination.Transitions<V>)
-                get() = {
-                    ViewNavigator.Destination.Transitions(transitionFactory?.invoke() ?: NavTransition.NoTransition(), popTransitionFactory?.invoke() ?: NavTransition.NoTransition())
-                }
-
-            fun view(view: () -> V){
-                viewFactory = view
-            }
-
-            fun defaultTransition(useAsPop: Boolean = true, transition: () -> NavTransition<View, V>) {
-                transitionFactory = transition
-                if (useAsPop) popTransitionFactory = transition
-            }
-
-            fun defaultPopTransition(popTransition: () -> NavTransition<View, V>) {
-                popTransitionFactory = popTransition
-            }
+        fun defaultPopTransition(popTransition: () -> NavTransition<View, V>) {
+            popTransitionFactory = popTransition
         }
     }
 
