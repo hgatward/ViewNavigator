@@ -22,7 +22,7 @@ class ViewNavigator(
 ) : Navigator<ViewNavigator.Destination>() {
     companion object {
         fun destinations(init: DestinationsContext.() -> Unit): Destinations{
-            val context = DestinationsContext()
+            val context = DestinationsContextImpl()
             context.init()
 
             return { destinationId ->
@@ -31,17 +31,27 @@ class ViewNavigator(
         }
     }
 
-    class DestinationsContext{
+    interface DestinationsContext{
+        fun <V: View> destination(id: Int, init: DestinationContext<V>.() -> Unit)
+    }
+
+    interface DestinationContext<V: View>{
+        fun view(view: () -> V)
+        fun defaultTransition(useAsPop: Boolean = true, transition: () -> NavTransition<View, V>)
+        fun defaultPopTransition(popTransition: () -> NavTransition<View, V>)
+    }
+
+    private class DestinationsContextImpl: DestinationsContext{
         val map: MutableMap<Int, ViewNavigator.Destination.Injector<out View>> = mutableMapOf()
 
-        fun <V: View> destination(id: Int, init: DestinationContext<V>.() -> Unit){
-            val context = DestinationContext<V>()
+        override fun <V: View> destination(id: Int, init: DestinationContext<V>.() -> Unit){
+            val context = DestinationContextImpl<V>()
             context.init()
             map[id] = ViewNavigator.Destination.Injector(context.viewFactory, context.transitionsFactory)
         }
     }
 
-    class DestinationContext<V: View>{
+    private class DestinationContextImpl<V: View>: DestinationContext<V>{
         lateinit var viewFactory: () -> V
         private var transitionFactory: (() -> NavTransition<View, V>)? = null
         private var popTransitionFactory: (() -> NavTransition<View, V>)? = null
@@ -51,16 +61,16 @@ class ViewNavigator(
                 ViewNavigator.Destination.Transitions(transitionFactory?.invoke() ?: NavTransition.NoTransition(), popTransitionFactory?.invoke() ?: NavTransition.NoTransition())
             }
 
-        fun view(view: () -> V){
+        override fun view(view: () -> V){
             viewFactory = view
         }
 
-        fun defaultTransition(useAsPop: Boolean = true, transition: () -> NavTransition<View, V>) {
+        override fun defaultTransition(useAsPop: Boolean, transition: () -> NavTransition<View, V>) {
             transitionFactory = transition
             if (useAsPop) popTransitionFactory = transition
         }
 
-        fun defaultPopTransition(popTransition: () -> NavTransition<View, V>) {
+        override fun defaultPopTransition(popTransition: () -> NavTransition<View, V>) {
             popTransitionFactory = popTransition
         }
     }
