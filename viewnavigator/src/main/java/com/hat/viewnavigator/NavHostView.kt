@@ -17,12 +17,12 @@ open class NavHostView(context: Context, attrs: AttributeSet? = null): FrameLayo
         const val KEY_NAV_CONTROLLER_STATE = "navControllerState"
     }
 
-    private val navController = NavController(context)
+    private val _navController = NavController(context)
     private val graphResId: Int
     private var hasSetGraph = false
 
     init {
-        Navigation.setViewNavController(this, navController)
+        Navigation.setViewNavController(this, _navController)
 
         with (context.theme.obtainStyledAttributes(attrs, R.styleable.NavHostView, 0, 0)) {
             graphResId = getResourceId(R.styleable.NavHostView_navGraph, 0)
@@ -32,17 +32,17 @@ open class NavHostView(context: Context, attrs: AttributeSet? = null): FrameLayo
     }
 
     fun install(activity: AppCompatActivity, destinations: (Int) -> ViewNavigator.Destination.Injector<out View>, fallbackTransition: NavTransition<View, View>? = null, fallbackPopTransition: NavTransition<View, View>? = null){
-        install(ActivityBackPressBinding(activity, navController), destinations, fallbackTransition, fallbackPopTransition)
+        install(ActivityBackPressBinding(activity, _navController), destinations, fallbackTransition, fallbackPopTransition)
     }
 
     fun install(backPressBinding: ViewNavigator.BackPressBinding, destinations: (Int) -> ViewNavigator.Destination.Injector<out View>, fallbackTransition: NavTransition<View, View>? = null, fallbackPopTransition: NavTransition<View, View>? = null){
         val navigator = ViewNavigator(this, destinations, fallbackTransition, fallbackPopTransition, backPressBinding)
 
-        navController.navigatorProvider.addNavigator(navigator)
+        _navController.navigatorProvider.addNavigator(navigator)
 
         if (!hasSetGraph) {
             hasSetGraph = true
-            navController.setGraph(graphResId)
+            _navController.setGraph(graphResId)
         }
     }
 
@@ -50,16 +50,16 @@ open class NavHostView(context: Context, attrs: AttributeSet? = null): FrameLayo
     override fun onSaveInstanceState(): Parcelable {
         return Bundle().apply {
             putParcelable(KEY_VIEW_STATE, super.onSaveInstanceState())
-            putParcelable(KEY_NAV_CONTROLLER_STATE, navController.saveState())
+            putParcelable(KEY_NAV_CONTROLLER_STATE, _navController.saveState())
         }
     }
 
     override fun onRestoreInstanceState(state: Parcelable) {
         with (state as Bundle) {
             super.onRestoreInstanceState(getParcelable(KEY_VIEW_STATE))
-            navController.restoreState(getParcelable(KEY_NAV_CONTROLLER_STATE))
+            _navController.restoreState(getParcelable(KEY_NAV_CONTROLLER_STATE))
         }
     }
 
-    override fun getNavController(): NavController = navController
+    override fun getNavController(): NavController = _navController
 }
